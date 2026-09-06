@@ -1,0 +1,88 @@
+# ===== Environment / secrets =====
+.env
+.env.*
+!.env.example
+
+# ===== Node =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.next/
+.nuxt/
+.turbo/
+.vite/
+.parcel-cache/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===== Build / dist =====
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+
+# ===== Logs / temp =====
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# ===== macOS =====
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# ===== Windows =====
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ===== VS Code / IDEs =====
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== DBs / data dumps =====
+*.sqlite
+*.sqlite3
+*.db
+data/local/
+
+# ===== Misc =====
+.cache/
+.eslintcache
+.stylelintcache
