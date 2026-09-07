@@ -1,0 +1,15 @@
+{
+  "name": "trueclick-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "End-to-end Playwright tests for the TrueClick extension. Isolated from trueclick/ — the extension itself still needs no npm/build.",
+  "scripts": {
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

@@ -59,7 +59,7 @@
         <div>
           <p class="tag bad">Deceptive — should be flagged</p>
           <p>
-            <a href="https://hdfc-verify-account.example-test.com">www.hdfcbank.com/secure-login</a>
+            <a id="t-link-fake" href="https://hdfc-verify-account.example-test.com">www.hdfcbank.com/secure-login</a>
           </p>
           <p style="font-size:13px;color:var(--tc-slate)">
             Text says hdfcbank.com; href goes to example-test.com.
@@ -68,7 +68,7 @@
         <div>
           <p class="tag good">Honest — should NOT be flagged</p>
           <p>
-            <a href="https://example.com/pricing">example.com/pricing</a>
+            <a id="t-link-honest" href="https://example.com/pricing">example.com/pricing</a>
           </p>
           <p style="font-size:13px;color:var(--tc-slate)">
             Text domain and href domain match.
@@ -80,7 +80,7 @@
         <div>
           <p class="tag good">Honest — nested title + URL breadcrumb (regression case)</p>
           <p>
-            <a href="https://hdhub4u.bi/movies" class="serp-result">
+            <a id="t-nested-honest" href="https://hdhub4u.bi/movies" class="serp-result">
               <span style="display:block;font-weight:600">hdhub4u.bi</span>
               <span style="display:block;color:var(--tc-slate);font-size:13px">hdhub4u.bi &rsaquo; movies</span>
             </a>
@@ -95,7 +95,7 @@
         <div>
           <p class="tag bad">Deceptive — nested pieces, but href is elsewhere</p>
           <p>
-            <a href="https://paypa1-secure.example-test.com/login" class="serp-result">
+            <a id="t-nested-fake" href="https://paypa1-secure.example-test.com/login" class="serp-result">
               <span style="display:block;font-weight:600">paypal.com</span>
               <span style="display:block;color:var(--tc-slate);font-size:13px">paypal.com &rsaquo; signin</span>
             </a>
@@ -114,13 +114,13 @@
       <div class="pair">
         <div>
           <p class="tag bad">Deceptive — should be flagged</p>
-          <button class="modal-close" aria-label="Close"
+          <button id="t-close-fake" class="modal-close" aria-label="Close"
                   onclick="alert('payment submitted'); return false;">&times;</button>
           <div id="fake-modal">This "close" button fires a payment action.</div>
         </div>
         <div>
           <p class="tag good">Honest — should NOT be flagged</p>
-          <button class="modal-close" aria-label="Close"
+          <button id="t-close-honest" class="modal-close" aria-label="Close"
                   onclick="document.getElementById('real-modal').style.display='none';">&times;</button>
           <div id="real-modal">This close button only hides this box.</div>
         </div>
@@ -130,14 +130,14 @@
         <div>
           <p class="tag bad">Deceptive — should be flagged (implicit submit)</p>
           <form action="#" onsubmit="alert('subscribed'); return false;">
-            <button>No thanks</button>
+            <button id="t-form-fake">No thanks</button>
           </form>
           <div id="sub-box">Bare &lt;button&gt; (no type) inside a &lt;form&gt; — clicking it submits.</div>
         </div>
         <div>
           <p class="tag good">Honest — should NOT be flagged</p>
           <form action="#" onsubmit="return false;">
-            <button type="button"
+            <button id="t-form-honest" type="button"
                     onclick="document.getElementById('sub-box2').style.display='none';">No thanks</button>
           </form>
           <div id="sub-box2">Bare &lt;button type="button"&gt; inside a &lt;form&gt; — only dismisses.</div>

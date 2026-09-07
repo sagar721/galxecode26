@@ -159,13 +159,27 @@
     });
   }
 
+  // When the popup is opened as a normal tab (automated testing), the active
+  // tab is the popup itself; ?tabId=<n> names the page to inspect instead.
+  function resolveTab(cb) {
+    var forced = parseInt(new URLSearchParams(location.search).get("tabId"), 10);
+    if (!isNaN(forced)) {
+      chrome.tabs.get(forced, function (t) {
+        cb(chrome.runtime.lastError ? null : t);
+      });
+      return;
+    }
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      cb(tabs && tabs[0]);
+    });
+  }
+
   function init() {
     show("scanning");
     startProgress();
     var started = Date.now();
 
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      var tab = tabs && tabs[0];
+    resolveTab(function (tab) {
       var settle = function (fn) {
         var wait = Math.max(0, MIN_SCAN_MS - (Date.now() - started));
         setTimeout(fn, wait);
