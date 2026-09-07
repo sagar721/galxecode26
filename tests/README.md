@@ -24,10 +24,11 @@ npm run report                       # opens the HTML report (screenshots, trace
 |---|---|
 | `1. test-page loads, zero console errors` | Page + content scripts + service worker load clean |
 | `2. planted elements flagged correctly` | Each planted element in `test-page.html` — outline/badge present or absent as expected. Screenshot attached to the report. |
-| `3. live search page has no false positives` | Opens a real results page (DuckDuckGo → Bing → Google fallback), confirms the `hdhub4u` nested-link case and every "visible domain == href domain" link is **not** flagged |
+| `3. live search page has no false positives` | Opens a real results page (Google → DuckDuckGo → Bing fallback). Resolves each result link through its tracking redirect and asserts **no** link whose visible domain matches its real destination is flagged — incl. the DuckDuckGo `/l/?uddg=` `hdhub4u` links that used to false-flag |
 | `4. popup shows the right count + list` | Opens `chrome-extension://<id>/popup/popup.html?tabId=<test tab>`, checks `5 mismatches flagged`, row types, high-confidence-first order |
 | `5. popup dark mode re-renders legibly` | `emulateMedia({colorScheme:'dark'})` + reload; asserts dark tokens applied and bg/fg contrast ≥ 4.5 |
 | `6. extension makes zero network calls` | Records every request; asserts none originate from the service worker, the popup, or the content scripts |
+| `7. resolveRealDestination unwraps redirector links` | Pure unit test (`require()`'d from `check-links.js`): DuckDuckGo/Google wrappers decode to the real domain; a redirector wrapping a phish still disagrees with the text; Bing base64 / real search URLs fall back correctly |
 
 ## Notes
 

@@ -81,6 +81,13 @@ runs and calls them.
   detached) and compares **every** domain token in the text against the href —
   it flags only when *no* token agrees, so a nested title + URL breadcrumb
   (Google-SERP shape) that both name the real domain is not a false positive.
+- Check 1 sees through known tracking redirectors (`resolveRealDestination()`):
+  Google / Bing / DuckDuckGo / Facebook / t.co / LinkedIn links are compared
+  against the real URL carried in their query string (`url` / `uddg` / `u` /
+  `q` / `imgrefurl`), not the redirector's own domain. A redirector whose
+  decoded destination still disagrees with the text is flagged normally
+  (redirectors also launder phishing links). Bing's base64 `u=` value isn't
+  decoded — those fall back to flagging against `bing.com`.
 - Check 2 is **Layer A only** — static markup (`onclick` attribute, `href`,
   enclosing `<form>`). It does **not** see `addEventListener`-bound handlers.
   That's Layer B (a MAIN-world injected script), a separate follow-up.

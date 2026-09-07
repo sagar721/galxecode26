@@ -303,24 +303,48 @@ test("3. live search page has no false positives", async () => {
       const l = host.split(".").filter(Boolean);
       return l.length <= 2 ? l.join(".") : l.slice(-2).join(".");
     }
+    // compact mirror of resolveRealDestination() from check-links.js
+    const REDIRECTORS = ["google.com", "bing.com", "duckduckgo.com", "facebook.com", "t.co", "linkedin.com"];
+    const PARAMS = ["url", "uddg", "u", "q", "imgrefurl"];
+    function resolveDest(absHref: string) {
+      let u: URL;
+      try { u = new URL(absHref); } catch { return { registrable: "", via: false }; }
+      let dom = reg(u.hostname);
+      if (!REDIRECTORS.includes(dom)) return { registrable: dom, via: false };
+      for (const p of PARAMS) {
+        const raw = u.searchParams.get(p);
+        if (!raw) continue;
+        for (const v of [raw, (() => { try { return decodeURIComponent(raw); } catch { return raw; } })()]) {
+          let s = String(v).trim();
+          if (s.startsWith("//")) s = "https:" + s;
+          try {
+            const inner = new URL(s);
+            if (/^https?:$/.test(inner.protocol)) return { registrable: reg(inner.hostname), via: true };
+          } catch { /* not a url */ }
+        }
+      }
+      return { registrable: dom, via: false };
+    }
     const DOMAIN = /\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/gi;
     const layer = document.getElementById("tc-overlay-layer");
     const badges = layer ? Array.from(layer.querySelectorAll(".tc-badge")) : [];
     const near = (a: number, b: number, t = 12) => Math.abs(a - b) <= t;
     const rows: Array<{
-      text: string; hrefHost: string; textDomains: string[];
-      textAgrees: boolean; flagged: boolean; hdhub: boolean;
+      text: string; hrefHost: string; resolvedDomain: string; viaRedirector: boolean;
+      textDomains: string[]; textAgrees: boolean; resolvedAgrees: boolean;
+      flagged: boolean; hdhub: boolean;
     }> = [];
     for (const a of Array.from(document.querySelectorAll("a[href]"))) {
       const el = a as HTMLAnchorElement;
-      let href = "";
-      try { href = new URL(el.href).hostname; } catch { continue; }
-      if (!/^https?:$/.test(new URL(el.href).protocol)) continue;
+      let proto = "";
+      try { proto = new URL(el.href).protocol; } catch { continue; }
+      if (!/^https?:$/.test(proto)) continue;
       const er = el.getBoundingClientRect();
       if (er.width === 0 || er.height === 0) continue;
       const text = ((el as HTMLElement).innerText || el.textContent || "").replace(/\s+/g, " ").trim();
       if (!text) continue;
-      const hrefHost = reg(href);
+      const hrefHost = reg(new URL(el.href).hostname);
+      const dest = resolveDest(el.href);
       const textDomains = Array.from(new Set(Array.from(text.matchAll(DOMAIN), (m) => reg(m[0])).filter(Boolean)));
       const flagged = badges.some((b) => {
         const br = b.getBoundingClientRect();
@@ -329,8 +353,11 @@ test("3. live search page has no false positives", async () => {
       rows.push({
         text: text.slice(0, 90),
         hrefHost,
+        resolvedDomain: dest.registrable,
+        viaRedirector: dest.via,
         textDomains,
         textAgrees: textDomains.length > 0 && textDomains.includes(hrefHost),
+        resolvedAgrees: textDomains.length > 0 && textDomains.includes(dest.registrable),
         flagged,
         hdhub: /hdhub4u/i.test(text) || /hdhub4u/i.test(el.href),
       });
@@ -338,7 +365,10 @@ test("3. live search page has no false positives", async () => {
     return {
       totalScanned: rows.length,
       flaggedCount: rows.filter((r) => r.flagged).length,
-      falsePositives: rows.filter((r) => r.flagged && r.textAgrees),
+      redirectorRows: rows.filter((r) => r.viaRedirector),
+      // flagged despite the visible domain matching the real destination (direct
+      // OR decoded through a redirector) => a genuine false positive
+      falsePositives: rows.filter((r) => r.flagged && (r.textAgrees || r.resolvedAgrees)),
       flaggedRows: rows.filter((r) => r.flagged),
       hdhubRows: rows.filter((r) => r.hdhub),
     };
@@ -353,19 +383,28 @@ test("3. live search page has no false positives", async () => {
   const ours = consErr.filter((e) => /trueclick|tc-overlay|check-/i.test(e));
   expect(ours, `TrueClick console errors on live page:\n${ours.join("\n")}`).toEqual([]);
 
-  // THE regression assertion: no link whose visible domain matches its href's
-  // registrable domain was flagged. (Search engines that wrap results in
-  // redirect URLs will legitimately flag the redirect — that is not this bug.)
+  // No link whose visible domain matches its real destination — resolving
+  // through the search engine's tracking redirect — may be flagged.
   expect(
     analysis.falsePositives,
-    "links whose visible domain == href domain were still flagged (false positives):\n" +
+    "links whose visible domain matches their real (redirect-resolved) destination were still flagged:\n" +
       JSON.stringify(analysis.falsePositives, null, 2)
   ).toEqual([]);
 
-  // Informational: any hdhub4u result whose text domain matches its href host
-  // must not be flagged (covered by falsePositives, restated for clarity).
-  const brokenHdhub = analysis.hdhubRows.filter((r) => r.flagged && r.textAgrees);
-  expect(brokenHdhub, "hdhub4u result flagged despite matching domains").toEqual([]);
+  // The specific regression: redirector-wrapped results (e.g. DuckDuckGo
+  // /l/?uddg=) whose decoded destination matches the visible text must be clean.
+  const brokenRedirects = analysis.redirectorRows.filter((r) => r.resolvedAgrees && r.flagged);
+  expect(
+    brokenRedirects,
+    "redirect-wrapped links resolving to the domain shown in their text were flagged:\n" +
+      JSON.stringify(brokenRedirects, null, 2)
+  ).toEqual([]);
+
+  // And no hdhub4u result whose text domain matches its real destination.
+  expect(
+    analysis.hdhubRows.filter((r) => r.flagged && (r.textAgrees || r.resolvedAgrees)),
+    "hdhub4u result flagged despite matching its real destination"
+  ).toEqual([]);
 
   await page.close();
 });
@@ -495,4 +534,81 @@ test("6. extension makes zero network calls", async () => {
     allContextReqs.filter((r) => r.fromSW && isRemote(r.url)),
     "SW-originated remote requests (context-wide)"
   ).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// 7. unit: resolveRealDestination() sees through tracking redirectors
+//    (pure function, no browser — require()'d straight from the extension)
+// ---------------------------------------------------------------------------
+test("7. resolveRealDestination unwraps redirector links", async () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { resolveRealDestination } = require("../trueclick/content/check-links.js") as {
+    resolveRealDestination: (href: string, base?: string) => { registrable: string; target: string; viaRedirector: boolean };
+  };
+  const PAGE_BASE = "https://html.duckduckgo.com/html/?q=hdhub4u";
+
+  const cases: Array<[string, string, string | undefined, string, boolean]> = [
+    ["direct link is untouched", "https://example.com/pricing", undefined, "example.com", false],
+    [
+      "DuckDuckGo /l/?uddg= decodes to the real destination (agrees -> no flag)",
+      "https://duckduckgo.com/l/?uddg=" + encodeURIComponent("https://hdhub4u.gd/movies") + "&rut=x",
+      undefined,
+      "hdhub4u.gd",
+      true,
+    ],
+    [
+      "protocol-relative //duckduckgo.com/l/ resolves against the page base",
+      "//duckduckgo.com/l/?uddg=" + encodeURIComponent("https://hdhub4u.town/"),
+      PAGE_BASE,
+      "hdhub4u.town",
+      true,
+    ],
+    [
+      "Google /url?q= wrapper",
+      "https://www.google.com/url?q=https://nytimes.com/x&sa=U",
+      undefined,
+      "nytimes.com",
+      true,
+    ],
+    [
+      "redirector wrapping a genuine phish still disagrees with the text (SHOULD flag)",
+      "https://duckduckgo.com/l/?uddg=" + encodeURIComponent("https://paypa1-secure.example-test.com/login"),
+      undefined,
+      "example-test.com",
+      true,
+    ],
+    [
+      "redirector with no decodable destination falls back to the redirector domain",
+      "https://www.bing.com/ck/a?!&&u=a1aHR0cHM6Ly9leGFtcGxlLmNvbQ&ntb=1",
+      undefined,
+      "bing.com",
+      false,
+    ],
+    [
+      "a real Google search URL (?q=<terms>) is not treated as a redirect",
+      "https://www.google.com/search?q=hdhub4u",
+      undefined,
+      "google.com",
+      false,
+    ],
+  ];
+
+  const failures: string[] = [];
+  for (const [name, href, base, wantDomain, wantVia] of cases) {
+    const r = resolveRealDestination(href, base);
+    if (r.registrable !== wantDomain || r.viaRedirector !== wantVia) {
+      failures.push(
+        `${name}\n   got ${JSON.stringify({ registrable: r.registrable, viaRedirector: r.viaRedirector })}` +
+          ` want { registrable: '${wantDomain}', viaRedirector: ${wantVia} }`
+      );
+    }
+  }
+  expect(failures, `\n${failures.join("\n")}`).toEqual([]);
+
+  // the redirector-wrapped phish, run through the visible-text comparison,
+  // must still be a mismatch
+  const phish = resolveRealDestination(
+    "https://duckduckgo.com/l/?uddg=" + encodeURIComponent("https://paypa1-secure.example-test.com/x")
+  );
+  expect(["paypal.com"].includes(phish.registrable), "phish must NOT read as paypal.com").toBe(false);
 });
