@@ -77,10 +77,14 @@ runs and calls them.
 
 - `getRegistrableDomain()` is a simplified last-two-labels approximation, **not**
   a Public Suffix List. Multi-part TLDs (`co.uk`) collapse imperfectly.
+- Check 1 reads link text via `innerText` (falls back to `textContent` when
+  detached) and compares **every** domain token in the text against the href —
+  it flags only when *no* token agrees, so a nested title + URL breadcrumb
+  (Google-SERP shape) that both name the real domain is not a false positive.
 - Check 2 is **Layer A only** — static markup (`onclick` attribute, `href`,
   enclosing `<form>`). It does **not** see `addEventListener`-bound handlers.
   That's Layer B (a MAIN-world injected script), a separate follow-up.
 - Check 3 requires urgency wording ("offer", "ends", "left", …) near the value,
   to avoid flagging ordinary times/clocks.
 - One scan per page load. SPA route changes don't re-trigger a scan.
-- Fonts fall back to system UI faces until the `.woff2` files are added.
+- Fonts: IBM Plex Sans/Mono + Fraunces `.woff2` are bundled under `popup/fonts/`.

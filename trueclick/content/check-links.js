@@ -22,7 +22,9 @@
   ];
 
   // Matches a bare domain-looking token, e.g. "www.hdfcbank.com" or "paypal.co".
-  var DOMAIN_IN_TEXT = /\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/i;
+  // Global: a single anchor's text can legitimately contain the domain more than
+  // once (title + URL breadcrumb), so we collect every match, not just the first.
+  var DOMAIN_IN_TEXT = /\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b/gi;
 
   /*
    * Simplified registrable-domain approximation: strip a leading "www." and
@@ -41,7 +43,13 @@
   }
 
   function visibleText(el) {
-    return (el.textContent || "").replace(/\s+/g, " ").trim();
+    // Prefer innerText: it honours rendering/visibility and inserts whitespace
+    // between block-level descendants, so a link that nests a title and a URL
+    // breadcrumb doesn't collapse into "hdhub4u.bihdhub4u.bihttps...".
+    // textContent is only a fallback for detached / non-rendering contexts.
+    var raw = (typeof el.innerText === "string" && el.innerText) ||
+      el.textContent || "";
+    return raw.replace(/\s+/g, " ").trim();
   }
 
   function isVisible(el) {
@@ -81,24 +89,34 @@
       var realDomain = getRegistrableDomain(realHost);
       if (!realDomain) return;
 
-      var domainMatch = text.match(DOMAIN_IN_TEXT);
+      // Every domain-looking token in the text, reduced to its registrable
+      // domain (deduped, order preserved). matchAll needs the /g flag and,
+      // unlike a shared .exec() loop, keeps no lastIndex state on the regex.
+      var claimedDomains = [];
+      Array.from(text.matchAll(DOMAIN_IN_TEXT), function (m) {
+        return getRegistrableDomain(m[0]);
+      }).forEach(function (d) {
+        if (d && claimedDomains.indexOf(d) === -1) claimedDomains.push(d);
+      });
 
-      // ---- Primary rule: the text shows a domain ----
-      if (domainMatch) {
-        var claimedRaw = domainMatch[0];
-        var claimedDomain = getRegistrableDomain(claimedRaw);
-        if (claimedDomain && claimedDomain !== realDomain) {
+      // ---- Primary rule: the text shows one or more domains ----
+      if (claimedDomains.length) {
+        // Consistent if ANY candidate agrees with the real destination — other
+        // unrelated or garbled tokens nearby must not override a genuine match.
+        var anyAgree = claimedDomains.indexOf(realDomain) !== -1;
+        if (!anyAgree) {
+          var shown = claimedDomains.slice(0, 3).join(", ");
           flags.push({
             id: "link-" + (counter++),
             type: "link",
             element: a,
             label: "Link claims one site, points to another",
-            claim: "Text shows " + claimedDomain,
+            claim: "Text shows " + shown,
             reality: "Link goes to " + realDomain,
             confidence: "high",
             evidence:
               'link text: "' + text + '"\n' +
-              "claimed domain: " + claimedDomain + "\n" +
+              "domain(s) in text: " + claimedDomains.join(", ") + "\n" +
               "actual href: " + (a.href || href) + "\n" +
               "actual domain: " + realDomain
           });

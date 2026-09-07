@@ -47,9 +47,10 @@
 <body>
   <main>
     <h1>TrueClick test fixture</h1>
-    <p class="lede">Six planted elements: one honest and one deceptive of each
-      check type. Load the extension, open this file, and confirm only the
-      deceptive three get flagged.</p>
+    <p class="lede">Honest and deceptive pairs for each of the three checks, plus
+      edge cases (implicit-submit buttons, nested SERP-style links). Load the
+      extension, open this file, and confirm every "deceptive" row is flagged and
+      no "honest" row is.</p>
 
     <!-- CHECK 1 — link text vs. destination -->
     <section>
@@ -71,6 +72,37 @@
           </p>
           <p style="font-size:13px;color:var(--tc-slate)">
             Text domain and href domain match.
+          </p>
+        </div>
+      </div>
+
+      <div class="pair" style="margin-top:24px">
+        <div>
+          <p class="tag good">Honest — nested title + URL breadcrumb (regression case)</p>
+          <p>
+            <a href="https://hdhub4u.bi/movies" class="serp-result">
+              <span style="display:block;font-weight:600">hdhub4u.bi</span>
+              <span style="display:block;color:var(--tc-slate);font-size:13px">hdhub4u.bi &rsaquo; movies</span>
+            </a>
+          </p>
+          <p style="font-size:13px;color:var(--tc-slate)">
+            Two block-level text pieces in one link (Google-SERP shape). Both name
+            the same domain the href points to. textContent would concatenate to
+            "hdhub4u.bihdhub4u.bi&nbsp;&rsaquo;&nbsp;movies" and false-flag;
+            innerText + all-matches must NOT flag this.
+          </p>
+        </div>
+        <div>
+          <p class="tag bad">Deceptive — nested pieces, but href is elsewhere</p>
+          <p>
+            <a href="https://paypa1-secure.example-test.com/login" class="serp-result">
+              <span style="display:block;font-weight:600">paypal.com</span>
+              <span style="display:block;color:var(--tc-slate);font-size:13px">paypal.com &rsaquo; signin</span>
+            </a>
+          </p>
+          <p style="font-size:13px;color:var(--tc-slate)">
+            Every domain token in the text says paypal.com; href goes to
+            example-test.com. No candidate agrees — still flagged.
           </p>
         </div>
       </div>
