@@ -1,0 +1,284 @@
+/* ------------------------------------------------------------------ *
+ * TrueClick popup
+ * Colour tokens are shared with content/overlay.css. Keep them in sync.
+ * ------------------------------------------------------------------ */
+
+:root {
+  --tc-ink: #14181F; --tc-paper: #F7F5F0; --tc-paper-2: #EFECE4;
+  --tc-slate: #4A5568; --tc-line: #DDD6C8;
+  --tc-verify: #1F6F5C; --tc-verify-bg: #E7F2EE;
+  --tc-alert: #B8452E; --tc-alert-bg: #FAEAE5;
+
+  --tc-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tc-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --tc-ink: #F2EFE7; --tc-paper: #14181F; --tc-paper-2: #1B212B; --tc-slate: #C7CDD6; --tc-line: #2C3340; --tc-verify: #5FCBAE; --tc-verify-bg: #16302A; --tc-alert: #FF8465; --tc-alert-bg: #3A2019; }
+}
+
+/* ---- Bundled faces. Drop the real .woff2 files into popup/fonts/ ---- *
+ * (see popup/fonts/README.md). Until then the fallback stacks render.  */
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-Regular.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-Medium.woff2") format("woff2");
+  font-weight: 500; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  src: url("fonts/IBMPlexSans-SemiBold.woff2") format("woff2");
+  font-weight: 600; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-Regular.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("fonts/IBMPlexMono-Medium.woff2") format("woff2");
+  font-weight: 500; font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("fonts/Fraunces-SemiBold.woff2") format("woff2");
+  font-weight: 600; font-display: swap;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 380px;
+  min-height: 96px;
+  max-height: 520px;
+  overflow-y: auto;
+  background: var(--tc-paper);
+  color: var(--tc-ink);
+  font-family: var(--tc-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tc-wrap {
+  padding: 16px;
+}
+
+/* ---- Header ---- */
+.tc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--tc-line);
+}
+
+.tc-wordmark {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+.tc-scope {
+  font-size: 12px;
+  color: var(--tc-slate);
+  font-weight: 500;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- State: scanning ---- */
+#state-scanning {
+  padding-top: 24px;
+}
+
+.tc-scan-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--tc-slate);
+}
+
+.tc-progress {
+  height: 4px;
+  width: 100%;
+  background: var(--tc-paper-2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tc-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--tc-slate);
+  border-radius: 10px;
+  transition: width 320ms linear;
+}
+
+/* ---- State: clean ---- */
+#state-clean {
+  padding-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tc-check {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--tc-verify);
+  position: relative;
+}
+.tc-check::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 6px;
+  height: 11px;
+  border-right: 2px solid var(--tc-verify);
+  border-bottom: 2px solid var(--tc-verify);
+  transform: rotate(40deg);
+}
+
+.tc-clean-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ---- State: flags ---- */
+#state-flags {
+  padding-top: 16px;
+}
+
+.tc-summary {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tc-slate);
+}
+
+.tc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tc-row {
+  border: 1px solid var(--tc-line);
+  border-radius: 10px;
+  background: var(--tc-paper);
+  padding: 16px;
+}
+
+.tc-row-top {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.tc-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  background: var(--tc-alert);
+}
+.tc-dot[data-confidence="medium"] {
+  background: transparent;
+  border: 2px solid var(--tc-alert);
+  width: 8px;
+  height: 8px;
+}
+
+.tc-row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tc-row-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tc-row-meta {
+  margin: 8px 0 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--tc-slate);
+}
+
+.tc-row-sentence {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+.tc-row-sentence .tc-arrow {
+  color: var(--tc-alert);
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.tc-proof-toggle {
+  margin-top: 8px;
+  appearance: none;
+  background: var(--tc-alert-bg);
+  color: var(--tc-alert);
+  border: 1px solid var(--tc-line);
+  border-radius: 8px;
+  padding: 8px;
+  font-family: var(--tc-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tc-proof {
+  margin: 8px 0 0;
+  padding: 8px;
+  background: var(--tc-paper-2);
+  border: 1px solid var(--tc-line);
+  border-radius: 8px;
+  font-family: var(--tc-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--tc-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.tc-proof[hidden] { display: none; }
+
+/* ---- State: unavailable (not in spec's three, but needed for chrome:// etc) ---- */
+#state-blocked {
+  padding-top: 24px;
+}
+.tc-blocked-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tc-slate);
+}
+
+[hidden] { display: none !important; }

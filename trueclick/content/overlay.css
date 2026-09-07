@@ -1,0 +1,110 @@
+:root {
+  --tc-ink: #14181F; --tc-paper: #F7F5F0; --tc-paper-2: #EFECE4;
+  --tc-slate: #4A5568; --tc-line: #DDD6C8;
+  --tc-verify: #1F6F5C; --tc-verify-bg: #E7F2EE;
+  --tc-alert: #B8452E; --tc-alert-bg: #FAEAE5;
+}
+
+/* Full-viewport, click-through layer that holds every marker. */
+.tc-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+}
+
+/* 2px outline sitting exactly over the flagged element. */
+.tc-outline {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--tc-alert);
+  pointer-events: none;
+  background: transparent;
+}
+
+/* 18px circular badge pinned to the element's top-right corner. */
+.tc-badge {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 12px/1 "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--tc-paper);
+  background: var(--tc-alert);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 1px 1px rgba(20, 24, 31, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.tc-badge:focus-visible {
+  outline: 2px solid var(--tc-ink);
+  outline-offset: 1px;
+}
+
+/* Popover with claim -> reality and the proof toggle. */
+.tc-popover {
+  position: absolute;
+  width: 288px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 16px;
+  background: var(--tc-paper);
+  color: var(--tc-ink);
+  border: 1px solid var(--tc-line);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20, 24, 31, 0.12);
+  font: 400 13px/1.45 "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  pointer-events: auto;
+}
+
+.tc-popover[hidden] { display: none; }
+
+.tc-popover-label {
+  font-weight: 600;
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.tc-popover-sentence {
+  margin: 0 0 8px;
+  color: var(--tc-ink);
+}
+
+.tc-popover-sentence .tc-arrow {
+  color: var(--tc-alert);
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.tc-proof-toggle {
+  appearance: none;
+  background: var(--tc-alert-bg);
+  color: var(--tc-alert);
+  border: 1px solid var(--tc-line);
+  border-radius: 8px;
+  padding: 8px;
+  font: 500 12px/1 "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  cursor: pointer;
+}
+
+.tc-proof {
+  margin: 8px 0 0;
+  padding: 8px;
+  background: var(--tc-paper-2);
+  border: 1px solid var(--tc-line);
+  border-radius: 8px;
+  font: 400 12px/1.4 "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--tc-ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.tc-proof[hidden] { display: none; }

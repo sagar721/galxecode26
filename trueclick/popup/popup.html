@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TrueClick</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="tc-wrap">
+    <header class="tc-head">
+      <h1 class="tc-wordmark">TrueClick</h1>
+      <span class="tc-scope" id="scope">this page</span>
+    </header>
+
+    <!-- State 1: scanning -->
+    <section id="state-scanning">
+      <p class="tc-scan-label">Scanning page…</p>
+      <div class="tc-progress" role="progressbar" aria-label="Scanning page">
+        <div class="tc-progress-fill" id="progress-fill"></div>
+      </div>
+    </section>
+
+    <!-- State 2: clean -->
+    <section id="state-clean" hidden>
+      <span class="tc-check" aria-hidden="true"></span>
+      <p class="tc-clean-text">No mismatches found on this page.</p>
+    </section>
+
+    <!-- State 3: flags found -->
+    <section id="state-flags" hidden>
+      <p class="tc-summary" id="flags-summary"></p>
+      <ul class="tc-list" id="flags-list"></ul>
+    </section>
+
+    <!-- Extra state: extension can't run on this page (chrome://, store, etc.) -->
+    <section id="state-blocked" hidden>
+      <p class="tc-blocked-text">TrueClick can't inspect this page. Open a normal website and try again.</p>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

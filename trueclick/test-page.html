@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrueClick — test fixture</title>
+  <style>
+    :root {
+      --tc-ink: #14181F; --tc-paper: #F7F5F0; --tc-paper-2: #EFECE4;
+      --tc-slate: #4A5568; --tc-line: #DDD6C8;
+      --tc-verify: #1F6F5C; --tc-alert: #B8452E;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 40px;
+      background: var(--tc-paper); color: var(--tc-ink);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    p.lede { color: var(--tc-slate); margin: 0 0 32px; }
+    section {
+      border: 1px solid var(--tc-line); border-radius: 10px;
+      padding: 24px; margin-bottom: 16px; background: #fff;
+    }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em;
+         color: var(--tc-slate); margin: 0 0 16px; }
+    .pair { display: flex; gap: 32px; flex-wrap: wrap; }
+    .pair > div { flex: 1 1 240px; }
+    .tag { font-size: 12px; font-weight: 600; }
+    .tag.bad { color: var(--tc-alert); }
+    .tag.good { color: var(--tc-verify); }
+    a { color: #1a4fb4; }
+    .modal-close {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 1px solid var(--tc-line);
+      border-radius: 8px; background: var(--tc-paper-2); cursor: pointer;
+      font-size: 16px; line-height: 1; color: var(--tc-ink);
+    }
+    .countdown { font-variant-numeric: tabular-nums; font-weight: 600; }
+    #real-modal, #fake-modal {
+      margin-top: 12px; padding: 12px; border: 1px dashed var(--tc-line);
+      border-radius: 8px; font-size: 13px; color: var(--tc-slate);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>TrueClick test fixture</h1>
+    <p class="lede">Six planted elements: one honest and one deceptive of each
+      check type. Load the extension, open this file, and confirm only the
+      deceptive three get flagged.</p>
+
+    <!-- CHECK 1 — link text vs. destination -->
+    <section>
+      <h2>Check 1 · Link text vs. real destination</h2>
+      <div class="pair">
+        <div>
+          <p class="tag bad">Deceptive — should be flagged</p>
+          <p>
+            <a href="https://hdfc-verify-account.example-test.com">www.hdfcbank.com/secure-login</a>
+          </p>
+          <p style="font-size:13px;color:var(--tc-slate)">
+            Text says hdfcbank.com; href goes to example-test.com.
+          </p>
+        </div>
+        <div>
+          <p class="tag good">Honest — should NOT be flagged</p>
+          <p>
+            <a href="https://example.com/pricing">example.com/pricing</a>
+          </p>
+          <p style="font-size:13px;color:var(--tc-slate)">
+            Text domain and href domain match.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHECK 2 — dismiss control that does something else -->
+    <section>
+      <h2>Check 2 · Close button vs. real action</h2>
+      <div class="pair">
+        <div>
+          <p class="tag bad">Deceptive — should be flagged</p>
+          <button class="modal-close" aria-label="Close"
+                  onclick="alert('payment submitted'); return false;">&times;</button>
+          <div id="fake-modal">This "close" button fires a payment action.</div>
+        </div>
+        <div>
+          <p class="tag good">Honest — should NOT be flagged</p>
+          <button class="modal-close" aria-label="Close"
+                  onclick="document.getElementById('real-modal').style.display='none';">&times;</button>
+          <div id="real-modal">This close button only hides this box.</div>
+        </div>
+      </div>
+
+      <div class="pair" style="margin-top:24px">
+        <div>
+          <p class="tag bad">Deceptive — should be flagged (implicit submit)</p>
+          <form action="#" onsubmit="alert('subscribed'); return false;">
+            <button>No thanks</button>
+          </form>
+          <div id="sub-box">Bare &lt;button&gt; (no type) inside a &lt;form&gt; — clicking it submits.</div>
+        </div>
+        <div>
+          <p class="tag good">Honest — should NOT be flagged</p>
+          <form action="#" onsubmit="return false;">
+            <button type="button"
+                    onclick="document.getElementById('sub-box2').style.display='none';">No thanks</button>
+          </form>
+          <div id="sub-box2">Bare &lt;button type="button"&gt; inside a &lt;form&gt; — only dismisses.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHECK 3 — countdown timer -->
+    <section>
+      <h2>Check 3 · Countdown timer</h2>
+      <div class="pair">
+        <div>
+          <p class="tag bad">Deceptive — should be flagged</p>
+          <p>Offer ends in <span class="countdown" id="fake-timer">04:59</span></p>
+          <p style="font-size:13px;color:var(--tc-slate)">Hard-coded string; never changes.</p>
+        </div>
+        <div>
+          <p class="tag good">Honest — should NOT be flagged</p>
+          <p>Deal ends in <span class="countdown" id="real-timer">10:00</span></p>
+          <p style="font-size:13px;color:var(--tc-slate)">Real setInterval; decrements every second.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Honest countdown: a genuine one-second decrement.
+    (function () {
+      var el = document.getElementById("real-timer");
+      var total = 10 * 60; // 10:00
+      setInterval(function () {
+        total = Math.max(0, total - 1);
+        var m = String(Math.floor(total / 60)).padStart(2, "0");
+        var s = String(total % 60).padStart(2, "0");
+        el.textContent = m + ":" + s;
+      }, 1000);
+    })();
+    // The fake timer (#fake-timer) has no script — it stays at 04:59 forever.
+  </script>
+</body>
+</html>
